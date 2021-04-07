@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class HourStatistics extends Configured implements Tool {
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("M/d/y H:m");
@@ -68,12 +69,16 @@ public class HourStatistics extends Configured implements Tool {
         protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] fields = value.toString().split(",");
             if (datesNotEmpty(fields)) {
-                LocalDateTime appointmentDate = convertToLocalDateTime(fields[11]);
-                LocalDateTime arrivalDate = convertToLocalDateTime(fields[6]);
-                if (!distanceBetweenDatesExceeds24hours(appointmentDate, arrivalDate)) {
-                    int hour = appointmentDate.getHour();
-                    TextArrayWritable data = new TextArrayWritable(new LocalDateTime[]{appointmentDate, arrivalDate});
-                    context.write(new IntWritable(hour), data);
+                try {
+                    LocalDateTime appointmentDate = convertToLocalDateTime(fields[11]);
+                    LocalDateTime arrivalDate = convertToLocalDateTime(fields[6]);
+                    if (!distanceBetweenDatesExceeds24hours(appointmentDate, arrivalDate)) {
+                        int hour = appointmentDate.getHour();
+                        TextArrayWritable data = new TextArrayWritable(new LocalDateTime[]{appointmentDate, arrivalDate});
+                        context.write(new IntWritable(hour), data);
+                    }
+                } catch (Exception e) {
+
                 }
             }
         }
@@ -98,6 +103,7 @@ public class HourStatistics extends Configured implements Tool {
                 LocalDateTime appointmentTime = convertToLocalDateTime(pair[0].toString());
                 LocalDateTime arrivalTime = convertToLocalDateTime(pair[1].toString());
                 result.includeDates(appointmentTime, arrivalTime);
+
             }
             context.write(key, new Text(result.toString()));
         }
@@ -121,7 +127,7 @@ public class HourStatistics extends Configured implements Tool {
                 if (differenceInMinutes < 0) {
                     numberOfVisitorsArrivedAheadOfTime++;
                     totalSpeedUp += -differenceInMinutes;
-                } else if (differenceInMinutes > 0){
+                } else if (differenceInMinutes > 0) {
                     numberOfDelayedVisitors++;
                     totalDelay += -differenceInMinutes;
                 }

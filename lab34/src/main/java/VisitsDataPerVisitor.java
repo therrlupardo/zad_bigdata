@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 
 
 public class VisitsDataPerVisitor extends Configured implements Tool {
+    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/y H:m");
 
     public static void main(String[] args) throws Exception {
         int res = ToolRunner.run(new Configuration(), new VisitsDataPerVisitor(), args);
@@ -72,8 +73,14 @@ public class VisitsDataPerVisitor extends Configured implements Tool {
             String line = value.toString();
             String entityKey = buildKey(line);
             String dateAsString = line.split(",")[11];
+            if (!dateAsString.equals("")) {
+                try {
+                    LocalDateTime.parse(dateAsString, formatter);
+                    context.write(new Text(entityKey), new Text(dateAsString));
+                } catch(Exception e) {
 
-            context.write(new Text(entityKey), new Text(dateAsString));
+                }
+            }
         }
 
         private String buildKey(String line) {
@@ -89,14 +96,12 @@ public class VisitsDataPerVisitor extends Configured implements Tool {
         }
 
         @Override
-        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException{
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             Integer totalAppointments = 0;
             LocalDateTime minDate = null;
             LocalDateTime maxDate = null;
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/y H:m");
 
-            for(Text value: values) {
-                totalAppointments++;
+            for (Text value : values) {
                 LocalDateTime date = LocalDateTime.parse(value.toString(), formatter);
                 if (minDate == null || date.isBefore(minDate)) {
                     minDate = date;
@@ -104,27 +109,27 @@ public class VisitsDataPerVisitor extends Configured implements Tool {
                 if (maxDate == null || date.isAfter(maxDate)) {
                     maxDate = date;
                 }
+                totalAppointments++;
             }
-
-            String result = String.format("%s %s %d", minDate.format(formatter), maxDate.format(formatter), totalAppointments);
+            String result = String.format("%s\t%s\t%d", minDate.format(formatter), maxDate.format(formatter), totalAppointments);
             context.write(key, new Text(result));
         }
 
     }
 }
 
-//// >>> Don't Change
-//class ComparablePair<A extends Comparable<? super A>, B extends Comparable<? super B>> extends javafx.util.Pair<A, B>
-//        implements Comparable<ComparablePair<A, B>> {
-//
-//    public ComparablePair(A key, B value) {
-//        super(key, value);
-//    }
-//
-//    @Override
-//    public int compareTo(ComparablePair<A, B> o) {
-//        int cmp = o == null ? 1 : (this.getKey()).compareTo(o.getKey());
-//        return cmp == 0 ? (this.getValue()).compareTo(o.getValue()) : cmp;
-//    }
-//
-//}
+// >>> Don't Change
+class ComparablePair<A extends Comparable<? super A>, B extends Comparable<? super B>> extends javafx.util.Pair<A, B>
+        implements Comparable<ComparablePair<A, B>> {
+
+    public ComparablePair(A key, B value) {
+        super(key, value);
+    }
+
+    @Override
+    public int compareTo(ComparablePair<A, B> o) {
+        int cmp = o == null ? 1 : (this.getKey()).compareTo(o.getKey());
+        return cmp == 0 ? (this.getValue()).compareTo(o.getValue()) : cmp;
+    }
+
+}
