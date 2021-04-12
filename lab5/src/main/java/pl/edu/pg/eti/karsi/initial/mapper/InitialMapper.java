@@ -23,7 +23,11 @@ public class InitialMapper extends Mapper<Object, Text, Text, Text> {
         String startNode = splitted[0];
 
         double initialPercentage = 1.0 / this.N;
-        String nodeData = String.format("%s%s", String.valueOf(initialPercentage), splitted[1]);
+
+        String nodeData = splitted.length != 1
+                ? String.format("%s%s", String.valueOf(initialPercentage), splitted[1])
+                : String.format("%s", String.valueOf(initialPercentage));
+
         context.write(new Text(startNode), new Text(nodeData));
     }
 }

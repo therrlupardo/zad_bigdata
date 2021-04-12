@@ -22,7 +22,7 @@ OBJDIR=build
 
 JAR := MapReducePSO.jar
 
-TARGETS := $(addprefix run, A B C D)
+TARGETS := $(addprefix run, A B C)
 
 .PHONY: final $(TARGETS) clean
 
@@ -31,18 +31,26 @@ final: $(TARGETS)
 runA: $(OBJDIR)/InitializedPageRank.class
 	jar -cvf $(JAR) -C $(OBJDIR)/ ./
 	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/A-output/
-	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/temp*
-	hadoop jar $(JAR) InitializedPageRank -D N=4 -D K=15 -D tmpPath=/$(HDFS)/temp $(SMALL_DATASET) /$(HDFS)/A-output
+	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/tempA*
+	hadoop jar $(JAR) InitializedPageRank -D N=4 -D K=10 -D B=0.8 -D tmpPath=/$(HDFS)/tempA $(SMALL_DATASET) /$(HDFS)/A-output
 	@echo "Run the following command to read the output file:"
 	@echo "hdfs dfs -cat /$(HDFS)/A-output/part*"
 
-runB: $(OBJDIR)/SpiderWebPageRank.class
+runB: $(OBJDIR)/InitializedPageRank.class
 	jar -cvf $(JAR) -C $(OBJDIR)/ ./
 	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/B-output/
-	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/temp*
-	hadoop jar $(JAR) SpiderWebPageRank -D N=4 -D K=2 -D B=0.8 -D tmpPath=/$(HDFS)/temp $(SPIDER_TRAPS_DATASET) /$(HDFS)/B-output
+	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/tempB*
+	hadoop jar $(JAR) InitializedPageRank -D N=4 -D K=10 -D tmpPath=/$(HDFS)/tempB $(DEAD_ENDS_DATASET) /$(HDFS)/B-output
 	@echo "Run the following command to read the output file:"
 	@echo "hdfs dfs -cat /$(HDFS)/B-output/part*"
+
+runC: $(OBJDIR)/InitializedPageRank.class
+	jar -cvf $(JAR) -C $(OBJDIR)/ ./
+	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/C-output/
+	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/tempC*
+	hadoop jar $(JAR) InitializedPageRank -D N=4 -D K=10 -D tmpPath=/$(HDFS)/tempC $(SPIDER_TRAPS_DATASET) /$(HDFS)/C-output
+	@echo "Run the following command to read the output file:"
+	@echo "hdfs dfs -cat /$(HDFS)/C-output/part*"
 
 $(OBJDIR)/%.class: %.java | $(OBJDIR)
 	hadoop com.sun.tools.javac.Main $< -d $(OBJDIR)
