@@ -16,7 +16,7 @@ SMALL_DATASET=$(DATASET_URL)/wikiSmall
 SPIDER_TRAPS_DATASET=$(DATASET_URL)/wikiSpiderTraps
 DEAD_ENDS_DATASET=$(DATASET_URL)/wikiDeadEnds
 
-USED_DATASET=$(SMALL_DATASET)
+USED_DATASET=$(SPIDER_TRAPS_DATASET)
 
 OBJDIR=build
 
@@ -32,14 +32,15 @@ runA: $(OBJDIR)/InitializedPageRank.class
 	jar -cvf $(JAR) -C $(OBJDIR)/ ./
 	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/A-output/
 	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/temp*
-	hadoop jar $(JAR) InitializedPageRank -D N=4 -D K=15 -D B=0.8 -D tmpPath=/$(HDFS)/temp $(USED_DATASET) /$(HDFS)/A-output
+	hadoop jar $(JAR) InitializedPageRank -D N=4 -D K=15 -D tmpPath=/$(HDFS)/temp $(SMALL_DATASET) /$(HDFS)/A-output
 	@echo "Run the following command to read the output file:"
 	@echo "hdfs dfs -cat /$(HDFS)/A-output/part*"
 
-runB: $(OBJDIR)/FindMostFrequentCombinations.class
+runB: $(OBJDIR)/SpiderWebPageRank.class
 	jar -cvf $(JAR) -C $(OBJDIR)/ ./
 	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/B-output/
-	hadoop jar $(JAR) FindMostFrequentCombinations -D N=10 $(TEST_DATASET) /$(HDFS)/B-output
+	hdfs dfs -rm -r -skipTrash -f /$(HDFS)/temp*
+	hadoop jar $(JAR) SpiderWebPageRank -D N=4 -D K=2 -D B=0.8 -D tmpPath=/$(HDFS)/temp $(SPIDER_TRAPS_DATASET) /$(HDFS)/B-output
 	@echo "Run the following command to read the output file:"
 	@echo "hdfs dfs -cat /$(HDFS)/B-output/part*"
 
