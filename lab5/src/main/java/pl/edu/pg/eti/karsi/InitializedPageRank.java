@@ -1,4 +1,4 @@
-// package pl.edu.pg.eti.karsi;
+package pl.edu.pg.eti.karsi;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -134,10 +134,6 @@ public class InitializedPageRank extends Configured implements Tool {
 
             double initialPercentage = 1.0 / this.N;
             String nodeData = String.format("%s%s", String.valueOf(initialPercentage), splitted[1]);
-//            ArrayList<String> nodeData = new ArrayList<>();
-//            nodeData.add(String.valueOf(initialPercentage));
-//            nodeData.addAll(Arrays.asList(splitted[1].split(";")));
-
             context.write(new Text(startNode), new Text(nodeData));
         }
     }
@@ -182,7 +178,7 @@ public class InitializedPageRank extends Configured implements Tool {
             context.write(key, new Text(result));
         }
     }
-    
+
     private static class FinalMapper extends Mapper<Text, Text, NullWritable, Text> {
         @Override
         protected void map(Text key, Text value, Context context) throws IOException, InterruptedException {
@@ -191,12 +187,13 @@ public class InitializedPageRank extends Configured implements Tool {
             context.write(NullWritable.get(), new Text(result));
         }
     }
-    
+
     private static class FinalReducer extends Reducer<NullWritable, Text, Text, DoubleWritable> {
-        private TreeSet<ComparablePair<Double, String>> pageRank = new TreeSet<>();
+        private final TreeSet<ComparablePair<Double, String>> pageRank = new TreeSet<>();
+
         @Override
         protected void reduce(NullWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-            for (Text value: values) {
+            for (Text value : values) {
                 String[] pair = value.toString().split(" ");
                 String page = pair[1];
                 double chance = Double.parseDouble(pair[0]);
