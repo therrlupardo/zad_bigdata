@@ -149,7 +149,7 @@ public class TopTitles extends Configured implements Tool {
         }
     }
 
-    public static class TopTitlesMap extends Mapper<Text, T`ext, NullWritable, TextArrayWritable> {
+    public static class TopTitlesMap extends Mapper<Text, Text, NullWritable, TextArrayWritable> {
         Integer N;
         private TreeSet<ComparablePair<Integer, String>> countToTitleMap = new TreeSet<ComparablePair<Integer, String>>();
         private Text outKey = new Text();
